@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brújula - Compass</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container {
+            text-align: center;
+        }
+
+        h1 {
+            color: white;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .compass-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 30px;
+        }
+
+        .compass {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f0f0);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5),
+                inset 0 -2px 5px rgba(0, 0, 0, 0.1);
+            border: 8px solid #333;
+        }
+
+        /* Outer ring with degree markings */
+        .degree-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+        }
+
+        .degree-mark {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            transform-origin: center;
+        }
+
+        .degree-mark::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: 10px;
+            width: 2px;
+            height: 8px;
+            background: #333;
+            transform: translateX(-1px);
+        }
+
+        .degree-mark.major::before {
+            height: 12px;
+            background: #000;
+            width: 3px;
+            transform: translateX(-1.5px);
+        }
+
+        .degree-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+        }
+
+        /* Cardinal directions */
+        .cardinal {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #d32f2f;
+            transform-origin: center;
+        }
+
+        .cardinal.n {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #d32f2f;
+        }
+
+        .cardinal.s {
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #333;
+        }
+
+        .cardinal.e {
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #333;
+        }
+
+        .cardinal.w {
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #333;
+        }
+
+        /* Needle */
+        .needle-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.05s ease-out;
+        }
+
+        .needle {
+            position: relative;
+            width: 6px;
+            height: 120px;
+        }
+
+        .needle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 60px;
+            background: #d32f2f;
+            border-radius: 3px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .needle::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 60px;
+            background: #fff;
+            border: 1px solid #333;
+            border-radius: 3px;
+            box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Center dot */
+        .center-dot {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #333;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .center-dot::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #fff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Information display */
+        .info-display {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            color: #333;
+        }
+
+        .info-item {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .info-value {
+            font-size: 18px;
+            color: #d32f2f;
+            margin-left: 10px;
+        }
+
+        .button-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background: #667eea;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+
+        button:hover {
+            background: #764ba2;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .compass-wrapper {
+                width: 250px;
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧭 Brújula Digital</h1>
+        
+        <div class="compass-wrapper">
+            <div class="compass">
+                <div class="degree-ring" id="degreeRing"></div>
+                
+                <div class="cardinal n">N</div>
+                <div class="cardinal s">S</div>
+                <div class="cardinal e">E</div>
+                <div class="cardinal w">W</div>
+                
+                <div class="needle-container" id="needleContainer">
+                    <div class="needle"></div>
+                </div>
+                
+                <div class="center-dot"></div>
+            </div>
+        </div>
+
+        <div class="info-display">
+            <div class="info-item">
+                <span class="info-label">Dirección:</span>
+                <span class="info-value" id="direction">N</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Grados:</span>
+                <span class="info-value" id="degrees">0°</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Latitud:</span>
+                <span class="info-value" id="latitude">--</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Longitud:</span>
+                <span class="info-value" id="longitude">--</span>
+            </div>
+            <div class="button-group">
+                <button onclick="requestPermission()">Activar Brújula</button>
+                <button onclick="resetCompass()">Reiniciar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentHeading = 0;
+
+        // Generate degree markings
+        function generateDegreeMarkings() {
+            const degreeRing = document.getElementById('degreeRing');
+            for (let i = 0; i < 360; i += 10) {
+                const mark = document.createElement('div');
+                mark.className = 'degree-mark' + (i % 30 === 0 ? ' major' : '');
+                mark.style.transform = `rotate(${i}deg)`;
+                degreeRing.appendChild(mark);
+            }
+
+            // Add degree numbers
+            for (let i = 0; i < 360; i += 30) {
+                const numberDiv = document.createElement('div');
+                numberDiv.className = 'degree-text';
+                const span = document.createElement('span');
+                span.textContent = i === 0 ? '0°' : i;
+                span.style.transform = `rotate(${-i}deg) translateY(-120px)`;
+                numberDiv.appendChild(span);
+                numberDiv.style.transform = `rotate(${i}deg)`;
+                degreeRing.appendChild(span);
+            }
+        }
+
+        // Get cardinal direction from degrees
+        function getCardinalDirection(degrees) {
+            const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+            const index = Math.round(degrees / 22.5) % 16;
+            return directions[index];
+        }
+
+        // Update compass display
+        function updateCompass(heading) {
+            currentHeading = heading;
+            const needleContainer = document.getElementById('needleContainer');
+            needleContainer.style.transform = `rotate(${heading}deg)`;
+            
+            document.getElementById('degrees').textContent = Math.round(heading) + '°';
+            document.getElementById('direction').textContent = getCardinalDirection(heading);
+        }
+
+        // Request device orientation permission (iOS 13+)
+        function requestPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permission => {
+                        if (permission === 'granted') {
+                            window.addEventListener('deviceorientation', handleDeviceOrientation);
+                            alert('¡Brújula activada! Gira tu dispositivo.');
+                        }
+                    })
+                    .catch(() => {
+                        alert('Permiso denegado. Usa el modo manual.');
+                        startManualMode();
+                    });
+            } else {
+                // Non-iOS devices
+                window.addEventListener('deviceorientation', handleDeviceOrientation);
+                alert('¡Brújula activada! Gira tu dispositivo.');
+            }
+        }
+
+        // Handle device orientation
+        function handleDeviceOrientation(event) {
+            let heading = event.alpha;
+            if (event.webkitCompassHeading !== undefined) {
+                heading = event.webkitCompassHeading;
+            }
+            updateCompass(heading);
+        }
+
+        // Manual mode with mouse
+        function startManualMode() {
+            document.addEventListener('mousemove', (e) => {
+                const compass = document.querySelector('.compass');
+                const rect = compass.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                
+                const angle = Math.atan2(e.clientY - centerY, e.clientX - centerX) * 180 / Math.PI + 90;
+                updateCompass((angle + 360) % 360);
+            });
+        }
+
+        // Get geolocation
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    document.getElementById('latitude').textContent = position.coords.latitude.toFixed(4);
+                    document.getElementById('longitude').textContent = position.coords.longitude.toFixed(4);
+                });
+            }
+        }
+
+        // Reset compass
+        function resetCompass() {
+            updateCompass(0);
+            document.getElementById('latitude').textContent = '--';
+            document.getElementById('longitude').textContent = '--';
+        }
+
+        // Initialize
+        generateDegreeMarkings();
+        getLocation();
+
+        // Try to activate compass on load
+        if (typeof DeviceOrientationEvent !== 'undefined') {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // iOS 13+
+                document.querySelector('.button-group button').textContent = 'Activar Brújula (iOS)';
+            } else {
+                // Android and older iOS
+                window.addEventListener('deviceorientation', handleDeviceOrientation);
+                alert('¡Brújula activada automáticamente!');
+            }
+        } else {
+            // Fallback to manual mode
+            startManualMode();
+            alert('Tu navegador no soporta sensor de orientación. Usando modo manual con el ratón.');
+        }
+    </script>
+</body>
+</html>
